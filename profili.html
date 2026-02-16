@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profili Im - Biblioteka</title>
+<style>
+body { font-family: Arial, sans-serif; background:#f4f6f9; margin:0; padding:20px; }
+header { display:flex; justify-content: space-between; align-items:center; margin-bottom:20px; }
+header h1 { margin:0; text-align:center; flex:1; }
+nav { display:flex; gap:10px; }
+nav button { padding:6px 12px; cursor:pointer; border:none; border-radius:5px; background:#0077cc; color:#fff; transition:0.25s; }
+nav button:hover { background:#005fa3; }
+
+#profileInfo { margin-bottom:20px; }
+#reservationsContainer, #pastContainer { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:15px; }
+.book-card { background:white; padding:15px; border-radius:10px; box-shadow:0 3px 8px rgba(0,0,0,0.1); }
+.book-card.pending { border:2px solid #ffc107; }
+button.cancel { padding:6px 10px; margin-top:5px; cursor:pointer; border:none; border-radius:5px; background:#dc3545; color:white; }
+#loading { text-align:center; margin:10px 0; font-weight:bold; display:none; }
+</style>
+</head>
+
+<body>
+<header>
+    <h1>Profili Im</h1>
+    <nav>
+        <button onclick="goToLibrary()">Biblioteka</button>
+        <button onclick="logout()">Dil</button>
+    </nav>
+</header>
+
+<div id="profileInfo">
+    <p><strong>Emri:</strong> <span id="emri"></span></p>
+    <p><strong>Mbiemri:</strong> <span id="mbiemri"></span></p>
+    <p><strong>Username:</strong> <span id="usernameDisplay"></span></p>
+</div>
+
+<h2>Rezervime Aktive</h2>
+<div id="loading">Ngarkohet...</div>
+<div id="reservationsContainer"></div>
+
+<h2>Historiku i Librave të Dorëzuar</h2>
+<div id="pastContainer"></div>
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyUQvrfdnYKQT3KTD5dh-9t386J30tydNL6z3twuRJDxLLNIncf8xIh3UddbyOillbl/exec"; 
+
+const studentName = sessionStorage.getItem("username");
+const role = sessionStorage.getItem("role");
+const emri = sessionStorage.getItem("emri");
+const mbiemri = sessionStorage.getItem("mbiemri");
+
+if(!studentName || role !== "student"){
+    alert("Ju duhet të logoheni si student!");
+    window.location.href = "stdlogin.html";
+}
+
+document.getElementById("emri").textContent = emri || "-";
+document.getElementById("mbiemri").textContent = mbiemri || "-";
+document.getElementById("usernameDisplay").textContent = studentName || "-";
+
+const loadingEl = document.getElementById("loading");
+
+function showLoading(show=true){
+    loadingEl.style.display = show ? "block" : "none";
+}
+
+// 1. Ngarkimi i Rezervimeve Aktive (Nga fleta Books)
+async function loadActiveReservations(){
+    showLoading(true);
+    try {
+        const res = await fetch(SCRIPT_URL);
+        const allBooks = await res.json();
+        
+        const container = document.getElementById("reservationsContainer");
+        container.innerHTML = "";
+
+        const activeBooks = allBooks.filter(b =>
+            b["Rezervuar Nga"] === studentName &&
+            ["Pending","Reserved"].includes(b.Status)
+        );
+
+        if(activeBooks.length === 0){
+            container.innerHTML = "<p style='padding:10px;'>Nuk keni rezervime aktive.</p>";
+        } else {
+            activeBooks.forEach(book => {
+                const row = Number(book.rowIndex);
+                const status = book.Status || "";
+                const card = document.createElement("div");
+                card.className = "book-card" + (status==="Pending"?" pending":"");
+                card.innerHTML = `
+                    <h3>${book.Titulli}</h3>
+                    <p><strong>Autori:</strong> ${book.Autori}</p>
+                    <p><strong>Statusi:</strong> <span style="color:${status==='Pending'?'#f39c12':'#2980b9'}">${status}</span></p>
+                `;
+                if(status === "Pending"){
+                    const btn = document.createElement("button");
+                    btn.textContent = "Anulo Rezervimin";
+                    btn.className = "cancel";
+                    btn.onclick = () => cancelReservation(row);
+                    card.appendChild(btn);
+                }
+                container.appendChild(card);
+            });
+        }
+    } catch (err) { console.error(err); }
+    showLoading(false);
+}
+
+// 2. Ngarkimi i Historikut (Nga fleta Historiku) - SHTESA E RE
+async function loadHistory(){
+    try {
+        const res = await fetch(SCRIPT_URL + "?type=history");
+        const historyData = await res.json();
+        
+        const container = document.getElementById("pastContainer");
+        container.innerHTML = "";
+
+        // Filtrojmë historikun vetëm për këtë student
+        const myHistory = historyData.filter(h => h.Studenti === studentName);
+
+        if(myHistory.length === 0){
+            container.innerHTML = "<p style='padding:10px;'>Nuk keni libra të dorëzuar ende.</p>";
+            return;
+        }
+
+        myHistory.forEach(item => {
+            const card = document.createElement("div");
+            card.className = "book-card";
+            // Këtu përdorim emrat e kolonave: Data, Studenti, Titulli, ID, Veprimi
+            card.innerHTML = `
+                <h3 style="color:#2c3e50;">${item.Titulli}</h3>
+                <p><strong>ID e librit:</strong> ${item.ID}</p>
+                <p><strong>Data e dorëzimit:</strong> ${new Date(item.Data).toLocaleDateString()}</p>
+                <p style="color:#27ae60; font-weight:bold;">Veprimi: ${item.Veprimi}</p>
+            `;
+            container.appendChild(card);
+        });
+    } catch (err) { console.error("Gabim te historiku:", err); }
+}
+
+async function cancelReservation(row){
+    showLoading(true);
+    try {
+        const res = await fetch(SCRIPT_URL, {
+            method: "POST",
+            body: JSON.stringify({
+                action: "cancelByStudent",
+                row: row,
+                student: studentName
+            })
+        });
+        const r = await res.json();
+        if(r.error) alert(r.error);
+        loadActiveReservations();
+    } catch (err) { console.error(err); }
+    showLoading(false);
+}
+
+function goToLibrary(){ window.location.href = "biblioteka-std.html"; }
+function logout(){ sessionStorage.clear(); window.location.href = "stdlogin.html"; }
+
+// Thirrja fillestare e të dyja funksioneve
+loadActiveReservations();
+loadHistory();
+</script>
+
+</body>
+</html>

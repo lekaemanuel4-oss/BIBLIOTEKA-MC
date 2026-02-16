@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portali i Bibliotekës Digjitale</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin:0; padding:0; font-family:'Inter', sans-serif; }
+    body {
+      min-height:100vh;
+      background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#fff;
+    }
+    .container {
+      width:90%;
+      max-width:1000px;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:24px;
+    }
+    .card {
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(12px);
+      border-radius:18px;
+      padding:50px 40px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      text-align:center;
+      transition:0.3s;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+    .card:hover { transform:translateY(-8px); box-shadow:0 20px 45px rgba(0,0,0,0.35); }
+    .card.student { background: linear-gradient(135deg, rgba(76,161,175,0.35), rgba(196,224,229,0.2)); }
+    .card.admin { background: linear-gradient(135deg, rgba(255,95,109,0.35), rgba(255,195,113,0.2)); }
+    h2 { font-size:2rem; margin-bottom:16px; font-weight:700; }
+    .icon { font-size:4rem; margin-bottom:18px; filter:drop-shadow(0 6px 12px rgba(0,0,0,0.35)); }
+    p { font-size:1rem; opacity:0.9; margin-bottom:32px; line-height:1.6; }
+    a.button {
+      text-decoration:none;
+      padding:14px 34px;
+      border-radius:999px;
+      font-weight:600;
+      font-size:1rem;
+      color:#fff;
+      background: rgba(0,0,0,0.35);
+      border:1px solid rgba(255,255,255,0.25);
+      transition:0.25s;
+    }
+    .card.admin { background: linear-gradient(135deg, rgba(255,95,109,0.35), rgba(255,195,113,0.2)); }
+    
+
+    .h2 { font-size:2rem; margin-bottom:16px; font-weight:700; }
+
+   .icon { font-size:4rem; margin-bottom:18px; filter:drop-shadow(0 6px 12px rgba(0,0,0,0.35)); }
+    
+   .login-inputs { display:flex; flex-direction:column; width:100%; }
+    .login-inputs input {
+      padding:12px 14px;
+      margin-bottom:16px;
+      border-radius:8px;
+      border:none;
+      outline:none;
+      font-size:1rem;
+    }
+    .login-inputs button {
+      padding:12px 0;
+      border:none;
+      border-radius:999px;
+      font-weight:600;
+      font-size:1rem;
+      color:#fff;
+      background: rgba(0,0,0,0.35);
+      cursor:pointer;
+      transition:0.25s;
+    }
+   a.button:hover { background: rgba(0,0,0,0.55); transform:scale(1.05); }
+    @media (max-width:768px){ .container{ grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <div style="grid-column:1/-1;text-align:center;margin-bottom:10px;">
+      <h1 style="font-size:2.4rem;font-weight:700;">Portali i Bibliotekës Digjitale Muharrem Collaku</h1>
+      <p style="opacity:0.85;margin-top:10px;">Zgjidhni mënyrën e aksesit për studentë ose administratorë të bibliotekës</p>
+    </div>
+
+    <!-- Student Card -->
+    <div class="card student">
+      <div class="icon">🎓</div>
+      <h2>Akses për Studentë</h2>
+      <p>Shfletoni librat e bibliotekës dhe bëni pararezervim për librat që ju nevojiten.</p>
+      <div style="display:flex; gap:14px; flex-wrap:wrap; justify-content:center;">
+        <a href="stdlogin.html" class="button">Hyr</a>
+        <a href="stdsignup.html" class="button">Regjistrohu</a>
+      </div>
+    </div>
+
+   <div class="card admin">
+    <div class="icon">👩‍🏫</div>
+    <h2>Administrator i Bibliotekës</h2>
+    <p>Menaxhoni kopjet e librave, kërkesat e studentëve dhe disponueshmërinë.</p>
+    <div class="login-inputs">
+      <input type="text" id="adminUsername" placeholder="Admin Username">
+      <input type="password" id="adminPassword" placeholder="Fjalëkalimi">
+      <button class="button" id="adminLoginBtn">Hyr</button>
+      <div class="message" id="adminMessage"></div>
+    </div>
+  </div>
+
+</div>
+
+  </div>
+
+
+
+
+  <script> 
+const USER_WS_URL = "https://script.google.com/macros/s/AKfycbyUQvrfdnYKQT3KTD5dh-9t386J30tydNL6z3twuRJDxLLNIncf8xIh3UddbyOillbl/exec"; // Apps Script Web App
+
+document.getElementById("adminLoginBtn").addEventListener("click", async () => {
+  const username = document.getElementById("adminUsername").value.trim();
+  const password = document.getElementById("adminPassword").value;
+  const messageEl = document.getElementById("adminMessage");
+
+  if(!username || !password){
+    messageEl.textContent = "Ju lutemi plotësoni të gjitha fushat.";
+    messageEl.style.color = "#ff7777";
+    return;
+  }
+
+  try {
+    const res = await fetch(USER_WS_URL + "?type=users");
+    const users = await res.json();
+
+    // Find approved admin user
+    const user = users.find(u => 
+      u.Username && u.Username.trim() === username &&
+      u.Password && u.Password.trim() === password &&
+      u.Role && u.Role.trim().toLowerCase() === "admin" &&
+      u.Status && u.Status.trim().toLowerCase() === "approved"
+    );
+
+    if(user){
+      // Set sessionStorage correctly
+      sessionStorage.setItem("username", user.Username.trim());
+      sessionStorage.setItem("role", "admin"); // must be lowercase to match checks
+      messageEl.textContent = "Hyrja e suksesshme!";
+      messageEl.style.color = "#a6f1a6";
+
+      // Redirect after short delay
+      setTimeout(()=> window.location.href = "biblioteka-adm.html", 800);
+    } else {
+      messageEl.textContent = "Username ose fjalëkalim i gabuar, ose nuk jeni aprovuar.";
+      messageEl.style.color = "#ff7777";
+    }
+
+  } catch(err){
+    console.error(err);
+    messageEl.textContent = "Ndodhi një gabim gjatë hyrjes.";
+    messageEl.style.color = "#ff7777";
+  }
+});
+</script>
+
+</body>
+</html>

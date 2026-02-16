@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hyrja e Studentëve - Portali i Bibliotekës Digjitale</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin:0; padding:0; font-family:'Inter', sans-serif; }
+    body { min-height:100vh; background: linear-gradient(135deg,#0f2027,#203a43,#2c5364); display:flex; align-items:center; justify-content:center; color:#fff; }
+    .login-container { background: rgba(255,255,255,0.08); backdrop-filter: blur(12px); border-radius:18px; padding:50px 40px; max-width:400px; width:90%; box-shadow:0 10px 30px rgba(0,0,0,0.25); text-align:center; }
+    .login-container h1 { margin-bottom:24px; font-size:2rem; }
+    .login-container p { margin-bottom:20px; opacity:0.85; }
+    input { width:100%; padding:12px 14px; margin-bottom:16px; border-radius:8px; border:none; outline:none; font-size:1rem; }
+    button { width:48%; padding:12px 0; margin:4px 1%; border:none; border-radius:999px; font-weight:600; font-size:1rem; color:#fff; background: rgba(0,0,0,0.35); cursor:pointer; transition:0.25s; }
+    button:hover { background: rgba(0,0,0,0.55); transform:scale(1.05); }
+    .message { margin-top:16px; opacity:0.9; }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <h1>Akses për Studentë</h1>
+    <p>Shkruani të dhënat për të hyrë në sistem</p>
+    <input type="text" id="username" placeholder="Username" />
+    <input type="password" id="password" placeholder="Fjalëkalimi" />
+    <div>
+      <button id="loginBtn">Hyr</button>
+      <button onclick="window.location.href='stdsignup.html'">Regjistrohu</button>
+    </div>
+    <div class="message" id="message"></div>
+  </div>
+
+  <script>
+    const loginBtn = document.getElementById('loginBtn');
+    const message = document.getElementById('message');
+
+    // Apps Script Web App URL
+    const USER_WS_URL = "https://script.google.com/macros/s/AKfycbyUQvrfdnYKQT3KTD5dh-9t386J30tydNL6z3twuRJDxLLNIncf8xIh3UddbyOillbl/exec";
+
+    loginBtn.addEventListener('click', async () => {
+      const usernameInput = document.getElementById('username').value.trim();
+      const passwordInput = document.getElementById('password').value;
+
+      if (!usernameInput || !passwordInput) {
+        message.style.color = '#ff7777';
+        message.textContent = 'Ju lutemi plotësoni të gjitha fushat.';
+        return;
+      }
+
+      try {
+        const response = await fetch(USER_WS_URL + "?type=users"); // ✅ Important
+        const users = await response.json();
+        console.log("Fetched users:", users);
+
+        const user = users.find(u =>
+          u.Username && u.Username.trim() === usernameInput &&
+          u.Password && u.Password.trim() === passwordInput &&
+          u.Status && u.Status.trim().toLowerCase() === 'approved' &&
+          u.Role && u.Role.trim().toLowerCase() === 'student'
+        );
+
+        if (user) {
+          message.style.color = '#a6f1a6';
+          message.textContent = 'Hyrja e suksesshme! Po ridrejtoheni...';
+          sessionStorage.setItem('username', user.Username);
+          sessionStorage.setItem('emri', user.Emri);
+          sessionStorage.setItem('mbiemri', user.Mbiemri);
+          sessionStorage.setItem('role', user.Role.toLowerCase());
+
+          setTimeout(() => window.location.href = 'biblioteka-std.html', 1500);
+        } else {
+          message.style.color = '#ff7777';
+          message.textContent = 'Username ose fjalëkalim i gabuar, ose nuk jeni aprovuar.';
+        }
+
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        message.style.color = '#ff7777';
+        message.textContent = 'Ndodhi një gabim gjatë hyrjes. Ju lutemi provoni përsëri.';
+      }
+    });
+  </script>
+</body>
+</html>

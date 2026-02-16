@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paneli i Administratorit</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+body, html { margin:0; padding:0; font-family:'Inter',sans-serif; height:100%; }
+body { display:flex; min-height:100vh; background:#f4f4f9; }
+.sidebar { width:250px; background:#2c3e50; color:#fff; display:flex; flex-direction:column; }
+.sidebar h2 { text-align:center; padding:20px 0; font-weight:700; font-size:1.5rem; border-bottom:1px solid rgba(255,255,255,0.2); }
+.sidebar button { padding:15px 20px; border:none; background:none; color:#fff; text-align:left; font-size:1rem; cursor:pointer; width:100%; transition:0.2s; }
+.sidebar button:hover, .sidebar button.active { background:rgba(255,255,255,0.2); }
+.main { flex:1; padding:20px; overflow:auto; }
+h1 { font-size:1.8rem; margin-bottom:20px; }
+table { width:100%; border-collapse:collapse; margin-bottom:20px; }
+th, td { padding:10px; border:1px solid #ddd; text-align:left; }
+th { background:#34495e; color:#fff; }
+button.action-btn { padding:6px 12px; border:none; border-radius:5px; cursor:pointer; margin-right:6px; }
+button.approve { background:#2ecc71; color:#fff; }
+button.reject { background:#e74c3c; color:#fff; }
+button.deliver { background:#3498db; color:#fff; }
+button.edit { background:#f1c40f; color:#fff; }
+input.add-book { margin-bottom:6px; padding:6px 8px; border-radius:5px; border:1px solid #ccc; width:auto; }
+#addBookBtn { padding:6px 12px; margin-top:6px; cursor:pointer; background:#28a745; color:white; border:none; border-radius:5px; }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <h2>Paneli i Adminit</h2>
+  <button class="active" data-tab="booksTab">Librat</button>
+  <button data-tab="reservationsTab">Rezervimet</button>
+  <button data-tab="accountsTab">Llogaritë</button>
+  <button id="logoutBtn">Dil</button>
+</div>
+
+<div class="main">
+  <h1 id="tabTitle">Librat</h1>
+
+  <!-- Books Tab -->
+  <div id="booksTab" class="tabContent">
+    <h3>Shto libër të ri</h3>
+    <div>
+      <input class="add-book" id="newNr" placeholder="Nr" style="width:50px;">
+      <input class="add-book" id="newTitulli" placeholder="Titulli">
+      <input class="add-book" id="newAutori" placeholder="Autori">
+      <input class="add-book" id="newLloji" placeholder="Lloji">
+      <input class="add-book" id="newShtepia" placeholder="Shtëpia Botuese">
+      <input class="add-book" id="newCop" placeholder="Cop" style="width:60px;">
+      <input class="add-book" id="newCopGjendje" placeholder="Cop gjendje" style="width:80px;">
+      <button id="addBookBtn">Shto</button>
+    </div>
+    <table>
+      <thead>
+        <tr><th>#</th><th>Titulli</th><th>Autori</th><th>Lloji</th><th>Shtëpia Botuese</th><th>Cop</th><th>Cop gjendje</th><th>Veprime</th></tr>
+      </thead>
+      <tbody id="booksBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Reservations Tab -->
+  <div id="reservationsTab" class="tabContent" style="display:none;">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Titulli</th><th>Studenti</th><th>Statusi</th><th>Veprime</th></tr>
+      </thead>
+      <tbody id="reservationsBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Accounts Tab -->
+  <div id="accountsTab" class="tabContent" style="display:none;">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Emri</th><th>Mbiemri</th><th>Username</th><th>Statusi</th><th>Veprime</th></tr>
+      </thead>
+      <tbody id="accountsBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const USER_WS_URL = "https://script.google.com/macros/s/AKfycbyUQvrfdnYKQT3KTD5dh-9t386J30tydNL6z3twuRJDxLLNIncf8xIh3UddbyOillbl/exec"; // Apps Script Web App
+
+// ----- Tab switching -----
+document.querySelectorAll(".sidebar button[data-tab]").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll(".tabContent").forEach(t=>t.style.display="none");
+    document.querySelectorAll(".sidebar button[data-tab]").forEach(b=>b.classList.remove("active"));
+    document.getElementById(btn.dataset.tab).style.display="block";
+    btn.classList.add("active");
+    document.getElementById("tabTitle").textContent = btn.textContent;
+    if(btn.dataset.tab === "booksTab") loadBooks();
+    if(btn.dataset.tab === "reservationsTab") loadReservations();
+    if(btn.dataset.tab === "accountsTab") loadAccounts();
+  });
+});
+
+// ----- Logout -----
+document.getElementById("logoutBtn").addEventListener("click", ()=>{ sessionStorage.clear(); window.location.href="index.html"; });
+
+// ----- Load Books -----
+async function loadBooks(){
+  try {
+    const res = await fetch(USER_WS_URL+"?type=books");
+    const books = await res.json();
+    const tbody = document.getElementById("booksBody");
+    tbody.innerHTML = "";
+    books.forEach((b,i)=>{
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${i+1}</td>
+        <td>${b.Titulli}</td>
+        <td>${b.Autori}</td>
+        <td>${b["Lloji i vepres"]}</td>
+        <td>${b["Shtepia botuese"]}</td>
+        <td>${b.Cop}</td>
+        <td>${b["Cop gjendje"]}</td>
+        <td>
+          <button class="action-btn edit" onclick="editBook(${b.rowIndex})">Ndrysho</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch(e){ console.error(e); }
+}
+
+// ----- Load Reservations -----
+async function loadReservations(){
+  try {
+    const res = await fetch(USER_WS_URL+"?type=books");
+    const books = await res.json();
+    const tbody = document.getElementById("reservationsBody");
+    tbody.innerHTML = "";
+    books.filter(b=>b["Rezervuar Nga"] && b.Status).forEach((b,i)=>{
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${i+1}</td>
+        <td>${b.Titulli}</td>
+        <td>${b["Rezervuar Nga"]}</td>
+        <td>${b.Status}</td>
+        <td>
+          ${b.Status==="Pending"?`
+          <button class="action-btn approve" onclick="approveReservation(${b.rowIndex})">Prano</button>
+          <button class="action-btn reject" onclick="rejectReservation(${b.rowIndex})">Refuzo</button>`:
+          b.Status==="Reserved"?`
+          <button class="action-btn deliver" onclick="deliverBook(${b.rowIndex})">Dorëzo</button>`:""}
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch(e){ console.error(e); }
+}
+
+// ----- Load Accounts -----
+async function loadAccounts(){
+  try {
+    const res = await fetch(USER_WS_URL+"?type=users");
+    const users = await res.json();
+    const tbody = document.getElementById("accountsBody");
+    tbody.innerHTML = "";
+    users.filter(u=>u.Role.toLowerCase()==="student").forEach((u,i)=>{
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${i+1}</td>
+        <td>${u.Emri}</td>
+        <td>${u.Mbiemri}</td>
+        <td>${u.Username}</td>
+        <td>${u.Status}</td>
+        <td>
+          ${u.Status==="Pending"?`
+          <button class="action-btn approve" onclick="approveAccount(${u.rowIndex})">Prano</button>
+          <button class="action-btn reject" onclick="rejectAccount(${u.rowIndex})">Refuzo</button>`:""}
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch(e){ console.error(e); }
+}
+
+// ----- Actions -----
+async function postAction(action,row){
+  await fetch(USER_WS_URL,{
+    method:"POST",
+    body: JSON.stringify({action,row})
+  });
+}
+async function approveReservation(row){ await postAction("approve",row); loadReservations(); }
+async function rejectReservation(row){ await postAction("reject",row); loadReservations(); }
+async function deliverBook(row){ await postAction("delivered",row); loadReservations(); }
+async function editBook(row){
+  const newCop = prompt("Shkruaj sasinë e re (Cop):");
+  const newCopGj = prompt("Shkruaj gjendjen e re (Cop gjendje):");
+  if(newCop!==null && newCopGj!==null){
+    await fetch(USER_WS_URL,{
+      method:"POST",
+      body:JSON.stringify({action:"updateStock", row, Cop:newCop, CopGjendje:newCopGj})
+    });
+    loadBooks();
+  }
+}
+async function approveAccount(row){ await postAction("approveAccount",row); loadAccounts(); }
+async function rejectAccount(row){ await postAction("rejectAccount",row); loadAccounts(); }
+
+// ----- Add Book -----
+document.getElementById("addBookBtn").addEventListener("click", async ()=>{
+  const Nr = document.getElementById("newNr").value;
+  const Titulli = document.getElementById("newTitulli").value;
+  const Autori = document.getElementById("newAutori").value;
+  const Lloji = document.getElementById("newLloji").value;
+  const Shtepia = document.getElementById("newShtepia").value;
+  const Cop = document.getElementById("newCop").value;
+  const CopGjendje = document.getElementById("newCopGjendje").value;
+
+  await fetch(USER_WS_URL,{
+    method:"POST",
+    body: JSON.stringify({action:"addBook", Nr,Titulli,Autori,"Lloji i vepres":Lloji,"Shtepia botuese":Shtepia,Cop,CopGjendje})
+  });
+  loadBooks();
+});
+
+// ----- Initial load -----
+loadBooks();
+</script>
+</body>
+</html>

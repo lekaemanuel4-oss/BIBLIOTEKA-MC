@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Regjistrohu - Portali i Bibliotekës Digjitale</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin:0; padding:0; font-family:'Inter', sans-serif; }
+    body {
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+      color:#fff;
+    }
+    .container {
+      width:90%;
+      max-width:500px;
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(12px);
+      border-radius:18px;
+      padding:40px 30px;
+      text-align:center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+    h1 { font-size:2rem; margin-bottom:24px; }
+    input { width:100%; padding:12px 14px; margin-bottom:16px; border-radius:8px; border:none; outline:none; font-size:1rem; }
+    button { width:100%; padding:12px 0; border:none; border-radius:999px; font-weight:600; font-size:1rem; color:#fff; background: rgba(0,0,0,0.35); cursor:pointer; transition:0.25s; }
+    button:hover { background: rgba(0,0,0,0.55); transform:scale(1.05); }
+    .message { margin-top:14px; font-weight:600; }
+    a { color:#a6f1a6; text-decoration:none; display:block; margin-top:20px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Regjistrohu si Student</h1>
+  <input type="text" id="emri" placeholder="Emri">
+  <input type="text" id="mbiemri" placeholder="Mbiemri">
+  <input type="text" id="username" placeholder="Username">
+  <input type="password" id="password" placeholder="Fjalëkalimi">
+  <button id="signupBtn">Regjistrohu</button>
+  <div class="message" id="signupMessage"></div>
+  <a href="index.html">Kthehu tek hyrja</a>
+</div>
+
+<script>
+const USER_WS_URL = "https://script.google.com/macros/s/AKfycbyUQvrfdnYKQT3KTD5dh-9t386J30tydNL6z3twuRJDxLLNIncf8xIh3UddbyOillbl/exec";
+
+document.getElementById("signupBtn").addEventListener("click", async () => {
+  const emri = document.getElementById("emri").value.trim();
+  const mbiemri = document.getElementById("mbiemri").value.trim();
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value;
+
+  const messageEl = document.getElementById("signupMessage");
+
+  if(!emri || !mbiemri || !username || !password){
+    messageEl.textContent = "Ju lutemi plotësoni të gjitha fushat.";
+    messageEl.style.color = "#ff7777";
+    return;
+  }
+
+  try {
+    const res = await fetch(USER_WS_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "signup",
+        Emri: emri,
+        Mbiemri: mbiemri,
+        Username: username,
+        Password: password
+      })
+    });
+
+    const data = await res.json();
+
+    if(data.success){
+      messageEl.textContent = "Regjistrimi u krye me sukses! Llogaria juaj duhet të aprovohet nga admin.";
+      messageEl.style.color = "#a6f1a6";
+      // Optionally redirect to login after 2 sec
+      setTimeout(()=> window.location.href="stdlogin.html", 2000);
+    } else if(data.error){
+      messageEl.textContent = data.error;
+      messageEl.style.color = "#ff7777";
+    } else {
+      messageEl.textContent = "Ndodhi një gabim gjatë regjistrimit.";
+      messageEl.style.color = "#ff7777";
+    }
+
+  } catch(err){
+    console.error(err);
+    messageEl.textContent = "Ndodhi një gabim gjatë regjistrimit.";
+    messageEl.style.color = "#ff7777";
+  }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biblioteka Student</title>
+
+<style>
+body { font-family: Arial,sans-serif; background:#f4f6f9; margin:0; padding:20px; }
+header { display:flex; justify-content: space-between; align-items:center; margin-bottom:20px; }
+header h1 { margin:0; text-align:center; flex:1; }
+nav { display:flex; gap:10px; }
+nav button { padding:6px 12px; cursor:pointer; border:none; border-radius:5px; background:#0077cc; color:#fff; transition:0.25s; }
+nav button:hover { background:#005fa3; }
+
+#booksContainer{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:15px;margin-top:20px;}
+.book-card{background:white;padding:15px;border-radius:10px;box-shadow:0 3px 8px rgba(0,0,0,0.1);}
+.book-card.pending{border:2px solid #ffc107;} /* highlight pending reservation */
+button.reserve{padding:6px 10px; margin-top:5px; cursor:pointer; border:none; border-radius:5px; background:#28a745; color:white;}
+button.cancel{padding:6px 10px; margin-top:5px; cursor:pointer; border:none; border-radius:5px; background:#dc3545; color:white;}
+button.reserve:disabled{background:#ccc;cursor:not-allowed;}
+#searchBar { width: 100%; padding:8px; margin-bottom:15px; border-radius:5px; border:1px solid #ccc;}
+.pagination button{margin:0 3px; padding:5px 10px; border:none; border-radius:5px; background:#0077cc; color:white; cursor:pointer;}
+.pagination button:disabled{background:#ccc; cursor:not-allowed;}
+#loading { text-align:center; margin-top:20px; font-weight:bold; display:none; }
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>📚 Biblioteka</h1>
+    <nav>
+        <button onclick="goToAccount()">Profili Im</button>
+        <button onclick="logout()">Dil</button>
+    </nav>
+</header>
+
+<input type="text" id="searchBar" placeholder="Kerko libra...">
+<div id="loading">Ngarkohet...</div>
+<div id="booksContainer"></div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyUQvrfdnYKQT3KTD5dh-9t386J30tydNL6z3twuRJDxLLNIncf8xIh3UddbyOillbl/exec";
+
+// SESSION CHECK
+const studentName = sessionStorage.getItem("username");
+const role = sessionStorage.getItem("role");
+
+if(!studentName || role !== "student"){
+    alert("Ju duhet të logoheni si student!");
+    window.location.href = "stdlogin.html";
+}
+
+let allBooks = [];
+let currentPage = 1;
+const perPage = 12;
+const loadingEl = document.getElementById("loading");
+
+function showLoading(show=true){
+    loadingEl.style.display = show ? "block" : "none";
+}
+
+function loadBooks() {
+    showLoading(true);
+    fetch(SCRIPT_URL)
+    .then(res => res.json())
+    .then(data => {
+        allBooks = data;
+        renderBooks();
+        showLoading(false);
+    })
+    .catch(err => {
+        console.error(err);
+        showLoading(false);
+    });
+}
+
+function renderBooks() {
+    const container = document.getElementById("booksContainer");
+    const search = document.getElementById("searchBar").value.toLowerCase();
+
+    // Track student's active reservations
+    const myActiveReservations = allBooks.filter(b =>
+        b["Rezervuar Nga"] === studentName &&
+        ["Pending","Reserved"].includes(b.Status)
+    );
+
+    let filtered = allBooks.filter(b => 
+        (b.Titulli || "").toLowerCase().includes(search) ||
+        (b.Autori || "").toLowerCase().includes(search)
+    );
+
+    const totalPages = Math.ceil(filtered.length / perPage);
+    if(currentPage > totalPages) currentPage = totalPages || 1;
+
+    const start = (currentPage-1)*perPage;
+    const end = start + perPage;
+    const booksToShow = filtered.slice(start, end);
+
+    container.innerHTML = "";
+
+    booksToShow.forEach(book => {
+        let reserved = book["Rezervuar Nga"];
+        let status = book["Status"];
+        let myReservation = reserved === studentName;
+        let available = book["Cop gjendje"] > 0;
+
+        let actionButton = "";
+
+        if(myReservation && status === "Pending"){
+            actionButton = `<button class="cancel" onclick="cancelReservation(${book.rowIndex})">Anulo Rezervimin</button>`;
+        }
+        else if(myActiveReservations.length === 0 && !reserved && available){
+            actionButton = `<button class="reserve" onclick="reserveBook(${book.rowIndex})">Rezervo 1</button>`;
+        }
+        else if(!myReservation){
+            actionButton = `<button class="reserve" disabled>Jo i disponueshëm</button>`;
+        }
+
+        container.innerHTML += `
+        <div class="book-card ${myReservation && status==="Pending"?"pending":""}">
+            <h3>${book.Titulli}</h3>
+            <p><strong>Autori:</strong> ${book.Autori}</p>
+            <p><strong>Lloji:</strong> ${book["Lloji i vepres"]}</p>
+            <p><strong>Shtepia:</strong> ${book["Shtepia botuese"]}</p>
+            <p><strong>Cop:</strong> ${book.Cop}</p>
+            <p><strong>Gjendje:</strong> ${book["Cop gjendje"]}</p>
+            <p><strong>Status:</strong> ${status || "-"}</p>
+            ${actionButton}
+        </div>`;
+    });
+
+    // Pagination
+    if(totalPages > 1){
+        let pagesHtml = `<div class="pagination" style="margin-top:20px;text-align:center;">`;
+        for(let i=1;i<=totalPages;i++){
+            pagesHtml += `<button onclick="gotoPage(${i})" ${i===currentPage?'disabled':''}>${i}</button>`;
+        }
+        pagesHtml += `</div>`;
+        container.innerHTML += pagesHtml;
+    }
+}
+
+// RESERVE BOOK
+function reserveBook(row){
+    showLoading(true);
+    fetch(SCRIPT_URL,{
+        method:"POST",
+        body: JSON.stringify({
+            action:"requestReserve",
+            row: row,
+            student: studentName
+        })
+    })
+    .then(res => res.json())
+    .then(r=>{
+        showLoading(false);
+        if(r.error) alert(r.error);
+        else {
+            alert("Rezervimi u dergua per aprovim!");
+            loadBooks();
+        }
+    })
+    .catch(err => { console.error(err); showLoading(false); });
+}
+
+// CANCEL RESERVATION
+function cancelReservation(row){
+    showLoading(true);
+    fetch(SCRIPT_URL,{
+        method:"POST",
+        body: JSON.stringify({
+            action:"cancelByStudent",
+            row: row,
+            student: studentName
+        })
+    })
+    .then(res => res.json())
+    .then(r=>{
+        showLoading(false);
+        if(r.error) alert(r.error);
+        else {
+            alert("Rezervimi u anulua!");
+            loadBooks();
+        }
+    })
+    .catch(err => { console.error(err); showLoading(false); });
+}
+
+function gotoPage(n){
+    currentPage = n;
+    renderBooks();
+}
+
+document.getElementById("searchBar").addEventListener("input", ()=>renderBooks());
+
+function goToAccount(){ window.location.href = "profili.html"; }
+function logout(){ sessionStorage.clear(); window.location.href = "stdlogin.html"; }
+
+loadBooks();
+</script>
+
+</body>
+</html>
