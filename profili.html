@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profili Im - Biblioteka</title>
+<style>
+    :root {
+        --bg-body: radial-gradient(circle at top right, #e2e8f0, #f8fafc);
+        --glass-bg: rgba(255, 255, 255, 0.7);
+        --glass-border: rgba(255, 255, 255, 0.4);
+        --text-main: #1e293b;
+        --text-muted: #475569;
+        --primary: #4f46e5;
+        --card-shadow: 0 8px 32px rgba(31, 38, 135, 0.07);
+    }
+
+    [data-theme="dark"] {
+        --bg-body: radial-gradient(circle at top right, #0f172a, #020617);
+        --glass-bg: rgba(15, 23, 42, 0.8);
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --text-main: #f1f5f9;
+        --text-muted: #94a3b8;
+        --primary: #818cf8;
+        --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    body { 
+        font-family: 'Inter', system-ui, sans-serif; 
+        background: var(--bg-body);
+        background-attachment: fixed;
+        color: var(--text-main);
+        margin: 0; 
+        min-height: 100vh;
+        transition: 0.3s;
+    }
+
+    header { 
+        display: flex; justify-content: space-between; align-items: center; 
+        padding: 0.8rem 5%; background: var(--glass-bg);
+        backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+        border-bottom: 1px solid var(--glass-border);
+        position: sticky; top: 0; z-index: 1000;
+    }
+
+    .nav-controls { display: flex; gap: 10px; align-items: center; }
+    button { padding: 8px 16px; border-radius: 10px; border: 1px solid var(--glass-border); cursor: pointer; font-weight: 600; transition: 0.2s; }
+    
+    .btn-theme { background: var(--glass-bg); color: var(--text-main); font-size: 1.1rem; }
+    .btn-lib { background: var(--primary); color: white; border: none; }
+    .btn-logout { background: #ef4444; color: white; border: none; }
+
+    .container { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
+
+    .profile-card {
+        background: var(--glass-bg); padding: 25px; border-radius: 20px;
+        border: 1px solid var(--glass-border); box-shadow: var(--card-shadow);
+        display: flex; align-items: center; gap: 20px; margin-bottom: 40px;
+        backdrop-filter: blur(10px);
+    }
+    .profile-avatar {
+        width: 70px; height: 70px; background: var(--primary);
+        border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        font-size: 1.8rem; color: white; font-weight: bold;
+    }
+
+    h2 { margin-top: 40px; border-left: 4px solid var(--primary); padding-left: 15px; font-size: 1.3rem; }
+
+    .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-top: 20px; }
+
+    .book-card {
+        background: var(--glass-bg); border: 1px solid var(--glass-border);
+        padding: 22px; border-radius: 18px; box-shadow: var(--card-shadow);
+        display: flex; flex-direction: column; backdrop-filter: blur(10px);
+        transition: 0.3s;
+    }
+    
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 15px 0; }
+    .detail-item { font-size: 0.8rem; color: var(--text-muted); }
+    .detail-item strong { color: var(--text-main); display: block; margin-bottom: 2px; font-size: 0.85rem; }
+
+    .badge-row { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+    .status-badge {
+        font-size: 0.7rem; font-weight: 800; padding: 5px 12px; border-radius: 8px;
+        text-transform: uppercase; letter-spacing: 0.5px;
+    }
+
+    .cancel-btn {
+        width: 100%; margin-top: 15px; background: rgba(239, 68, 68, 0.1);
+        color: #ef4444; border: 1px solid #ef4444; padding: 12px; border-radius: 12px;
+        font-weight: bold; cursor: pointer;
+    }
+
+    #loading { position: fixed; top: 20px; right: 20px; background: var(--primary); color: white; padding: 10px 20px; border-radius: 20px; display: none; z-index: 2000; }
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>Profili Im</h1>
+    <div class="nav-controls">
+        <button class="btn-theme" onclick="toggleTheme()">🌓</button>
+        <button class="btn-lib" onclick="goToLibrary()">📚 Biblioteka</button>
+        <button class="btn-logout" onclick="logout()">Dil</button>
+    </div>
+</header>
+
+<div class="container">
+    <div class="profile-card">
+        <div class="profile-avatar" id="avatarInitials">S</div>
+        <div>
+            <h3 style="margin:0; font-size: 1.4rem;" id="fullName">Student</h3>
+            <p style="margin:5px 0 0 0; opacity:0.7; font-size: 0.9rem;" id="userTag">@username</p>
+        </div>
+    </div>
+
+    <h2>Rezervime Aktive (Në Huazim)</h2>
+    <div id="reservationsContainer" class="grid-container"></div>
+
+    <h2>Historiku i Librave të Dorëzuar</h2>
+    <div id="pastContainer" class="grid-container"></div>
+</div>
+
+<div id="loading">Duke ngarkuar...</div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx66AOKiquQMOuaIW-_AQUIXPW1XwCC1B_IEN4XmV8OuIY3c9do8nG4tQvCJq02QU4/exec"; 
+
+const studentName = sessionStorage.getItem("username");
+const role = sessionStorage.getItem("role");
+const emri = sessionStorage.getItem("emri") || "";
+const mbiemri = sessionStorage.getItem("mbiemri") || "";
+
+if(!studentName || role !== "student") window.location.href = "stdlogin.html";
+
+// Theme Control
+function toggleTheme() {
+    const target = document.body.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    document.body.setAttribute("data-theme", target);
+    localStorage.setItem("lib-theme", target);
+}
+if(localStorage.getItem("lib-theme") === "dark") document.body.setAttribute("data-theme", "dark");
+
+document.getElementById("fullName").textContent = `${emri} ${mbiemri}`.trim();
+document.getElementById("userTag").textContent = `@${studentName}`;
+document.getElementById("avatarInitials").textContent = emri.charAt(0).toUpperCase() || "S";
+
+function showLoading(show=true){ document.getElementById("loading").style.display = show ? "block" : "none"; }
+
+// 1. REZERVIMET DHE LIBRAT AKTIVË (Tregon datën e marrjes/kërkesës)
+async function loadActiveReservations(){
+    showLoading(true);
+    try {
+        const res = await fetch(SCRIPT_URL + "?type=reservations");
+        const allReservations = await res.json();
+        const container = document.getElementById("reservationsContainer");
+        container.innerHTML = "";
+
+        const myActive = allReservations.filter(r => 
+            r.Studenti === studentName && ["Pending","Reserved"].includes(r.Status)
+        );
+
+        if(myActive.length === 0){
+            container.innerHTML = "<p style='padding:20px; opacity:0.6;'>Nuk keni asnjë libër në huazim apo kërkesë aktive.</p>";
+        } else {
+            myActive.forEach(resItem => {
+                const isPending = resItem.Status === "Pending";
+                const card = document.createElement("div");
+                card.className = "book-card";
+                card.style.borderTop = isPending ? "4px solid #f59e0b" : "4px solid #4f46e5";
+                
+                // Formatojmë datën (Data e kërkesës ose e huazimit)
+                // Sigurohu që emri i fushës është "Data" si në Apps Script doGet
+                const dataRez = resItem.Data ? new Date(resItem.Data).toLocaleDateString('sq-AL') : '-';
+
+                card.innerHTML = `
+                    <h3 style="margin:0; font-size:1.1rem; color:var(--primary)">${resItem.Titulli}</h3>
+                    <div class="detail-grid">     
+                        <div class="detail-item"><strong>ID Libri</strong>#${resItem.ID_Libri || 'N/A'}</div>
+                        <div class="detail-item"><strong>${isPending ? 'Data e Kërkesës' : 'Data e Marrjes'}</strong>${dataRez}</div>
+                    </div>
+                    <div class="badge-row">
+                        <span class="status-badge" style="background:${isPending?'rgba(245,158,11,0.1)':'rgba(79,70,229,0.1)'}; color:${isPending?'#d97706':'#4f46e5'}">
+                            ${isPending ? 'Në Pritje' : 'I Konfirmuar'}
+                        </span>
+                    </div>
+                    ${isPending ? `<button class="cancel-btn" onclick="cancelReservation(${resItem.rowIndex})">Anulo Kërkesën</button>` : ''}
+                `;
+                container.appendChild(card);
+            });
+        }
+    } catch (err) { console.error(err); }
+    showLoading(false);
+}
+
+// 2. HISTORIKU (Tregon ID, Data Marrjes dhe Data Dorëzimit)
+async function loadHistory(){
+    try {
+        const res = await fetch(SCRIPT_URL + "?type=history");
+        const historyData = await res.json();
+        const container = document.getElementById("pastContainer");
+        container.innerHTML = "";
+
+        const myHistory = historyData.filter(h => h.Studenti === studentName);
+
+        if(myHistory.length === 0) {
+            container.innerHTML = "<p style='padding:20px; opacity:0.6;'>Nuk keni dorëzuar ende asnjë libër.</p>";
+            return;
+        }
+
+        myHistory.forEach(item => {
+            // Emrat e variablave duhet të jenë fiks si kokëzat te fleta "Historiku"
+            const dMarrjes = item.Data_Marrjes ? new Date(item.Data_Marrjes).toLocaleDateString('sq-AL') : 'N/A';
+            const dDorezimit = item.Data_Dorezimit ? new Date(item.Data_Dorezimit).toLocaleDateString('sq-AL') : '-';
+            const idLibri = item.ID_Libri || 'N/A';
+
+            const card = document.createElement("div");
+            card.className = "book-card";
+            card.style.borderTop = "4px solid #22c55e";
+            
+            card.innerHTML = `
+                <h3 style="margin:0; font-size:1.1rem; color:var(--text-main)">${item.Titulli}</h3>
+                <div class="detail-grid">
+                    <div class="detail-item"><strong>ID Libri</strong>#${idLibri}</div>
+                    <div class="detail-item"><strong>Statusi</strong>Kthyer</div>
+                    <div class="detail-item"><strong>Data e Marrjes</strong>${dMarrjes}</div>
+                    <div class="detail-item"><strong>Data e Dorëzimit</strong>${dDorezimit}</div>
+                </div>
+                <div class="badge-row">
+                    <span class="status-badge" style="background:rgba(34,197,94,0.1); color:#16a34a">✓ I Dorëzuar</span>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    } catch (err) { console.error("Gabim te historiku:", err); }
+}
+
+async function cancelReservation(resRowIndex){
+    if(!confirm("A jeni i sigurt që dëshironi të anuloni kërkesën?")) return;
+    showLoading(true);
+    try {
+        const res = await fetch(SCRIPT_URL, {
+            method: "POST",
+            body: JSON.stringify({ action: "reject", row: resRowIndex })
+        });
+        const result = await res.json();
+        if(result.success) {
+            loadActiveReservations();
+        } else {
+            alert("Gabim: " + result.error);
+        }
+    } catch(e) {
+        alert("Gabim gjatë lidhjes me serverin.");
+    }
+    showLoading(false);
+}
+
+function goToLibrary(){ window.location.href = "biblioteka-std.html"; }
+function logout(){ sessionStorage.clear(); window.location.href = "stdlogin.html"; }
+
+// Start
+loadActiveReservations();
+loadHistory();
+</script>
+</body>
+</html>

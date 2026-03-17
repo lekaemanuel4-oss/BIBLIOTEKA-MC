@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hyrja e Studentëve - Portali i Bibliotekës</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+
+    body {
+      min-height: 100vh;
+      /* Kthimi te ngjyrat origjinale */
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+    }
+
+    .login-container {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border-radius: 18px;
+      padding: 50px 40px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      animation: slideIn 0.5s ease-out;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .login-container h1 { margin-bottom: 15px; font-size: 2rem; font-weight: 700; }
+    .login-container p { margin-bottom: 25px; opacity: 0.85; font-size: 0.95rem; }
+
+    input {
+      width: 100%;
+      padding: 13px 15px;
+      margin-bottom: 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(0,0,0,0.2);
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+      transition: 0.3s;
+    }
+
+    input:focus {
+      background: rgba(0,0,0,0.4);
+      border-color: rgba(255,255,255,0.4);
+    }
+
+    /* Grupi i butonave kryesorë */
+    .btn-group {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    button {
+      flex: 1;
+      padding: 12px 0;
+      border: none;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.35);
+      cursor: pointer;
+      transition: 0.25s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    button:hover {
+      background: rgba(0, 0, 0, 0.55);
+      transform: scale(1.05);
+    }
+
+    /* Butoni Mbrapa - Stili i veçantë */
+    .back-btn {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.2);
+      margin-top: 10px;
+      width: 100%;
+      opacity: 0.7;
+    }
+    
+    .back-btn:hover {
+      background: rgba(255,255,255,0.05);
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .message {
+      margin-top: 16px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      min-height: 1.2rem;
+    } 
+
+    
+
+    /* Spinner Animacioni */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <h1>Akses Studenti</h1>
+    <p>Shkruani të dhënat për të hyrë në sistem</p>
+    
+    <input type="text" id="username" placeholder="Username" />
+    <div style="position: relative; width: 100%;">
+    <input type="password" id="password" placeholder="Fjalëkalimi" style="padding-right: 45px;">
+    <div id="togglePassword" style="position: absolute; right: 15px; top: 13px; cursor: pointer; opacity: 0.6; display: flex; align-items: center;">
+      <svg id="eyeOpen" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+      <svg id="eyeClosed" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+    </div>
+  </div>
+
+    <div class="btn-group">
+      <button id="loginBtn">
+        <span class="spinner" id="spinner"></span>
+        <span id="btnText">Hyr</span>
+      </button>
+      <button onclick="window.location.href='stdsignup.html'">Regjistrohu</button>
+    </div>
+
+    <button class="back-btn" onclick="window.location.href='index.html'">← Mbrapa</button>
+
+    <div class="message" id="message"></div>
+  </div>
+
+  <script>
+    const loginBtn = document.getElementById('loginBtn');
+    const message = document.getElementById('message');
+    const spinner = document.getElementById('spinner');
+    const btnText = document.getElementById('btnText');
+
+    const USER_WS_URL = "https://script.google.com/macros/s/AKfycbx66AOKiquQMOuaIW-_AQUIXPW1XwCC1B_IEN4XmV8OuIY3c9do8nG4tQvCJq02QU4/exec";
+
+    loginBtn.addEventListener('click', async () => {
+      const usernameInput = document.getElementById('username').value.trim();
+      const passwordInput = document.getElementById('password').value;
+
+      if (!usernameInput || !passwordInput) {
+        showMessage('Ju lutemi plotësoni fushat.', '#ff7777');
+        return;
+      }
+
+      // Start loading
+      loginBtn.disabled = true;
+      spinner.style.display = 'block';
+      btnText.textContent = 'Duke hyrë...';
+
+      try {
+        const response = await fetch(USER_WS_URL + "?type=users");
+        const users = await response.json();
+
+        const user = users.find(u =>
+          u.Username && u.Username.trim() === usernameInput &&
+          u.Password && u.Password.trim() === passwordInput &&
+          u.Status && u.Status.trim().toLowerCase() === 'approved' &&
+          u.Role && u.Role.trim().toLowerCase() === 'student'
+        );
+
+        if (user) {
+          showMessage('Hyrja e suksesshme! Po ridrejtoheni...', '#a6f1a6');
+          
+          sessionStorage.setItem('username', user.Username);
+          sessionStorage.setItem('emri', user.Emri);
+          sessionStorage.setItem('mbiemri', user.Mbiemri);
+          sessionStorage.setItem('role', user.Role.toLowerCase());
+
+          setTimeout(() => window.location.href = 'biblioteka-std.html', 1500);
+        } else {
+          showMessage('Username/Password i gabuar ose nuk jeni aprovuar.', '#ff7777');
+          resetBtn();
+        }
+
+      } catch (error) {
+        console.error('Error:', error);
+        showMessage('Ndodhi një gabim. Provoni përsëri.', '#ff7777');
+        resetBtn();
+      }
+    });
+
+    function showMessage(text, color) {
+      message.style.color = color;
+      message.textContent = text;
+    }
+
+    function resetBtn() {
+      loginBtn.disabled = false;
+      spinner.style.display = 'none';
+      btnText.textContent = 'Hyr';
+    }
+
+    // Toggle Password Visibility
+const togglePassword = document.getElementById('togglePassword');
+const passwordInput = document.getElementById('password');
+const eyeOpen = document.getElementById('eyeOpen');
+const eyeClosed = document.getElementById('eyeClosed');
+
+togglePassword.addEventListener('click', function () {
+  const isPassword = passwordInput.type === 'password';
+  passwordInput.type = isPassword ? 'text' : 'password';
+  eyeOpen.style.display = isPassword ? 'none' : 'block';
+  eyeClosed.style.display = isPassword ? 'block' : 'none';
+});
+
+    // Enter Key support
+    document.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') loginBtn.click();
+    });
+  </script>
+</body>
+</html>

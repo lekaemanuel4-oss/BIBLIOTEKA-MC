@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Regjistrohu - Portali i Bibliotekës Digjitale</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin:0; padding:0; font-family:'Inter', sans-serif; }
+
+  body {
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+    color:#fff;
+    padding:20px;
+  }
+
+  .container {
+    width:90%;
+    max-width:450px;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-radius:24px;
+    padding:40px 30px;
+    text-align:center;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+    animation: fadeIn 0.5s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  h1 { font-size:1.8rem; margin-bottom:20px; font-weight:700; letter-spacing: -0.5px; }
+
+  input {
+    width:100%;
+    padding:13px 16px;
+    margin-bottom:16px;
+    border-radius:12px;
+    border: 1px solid rgba(255,255,255,0.1);
+    outline:none;
+    font-size:1rem;
+    background: rgba(0, 0, 0, 0.2);
+    color:#fff;
+    transition: 0.3s;
+  }
+
+  input::placeholder { color: rgba(255,255,255,0.5); }
+
+  input:focus {
+    background: rgba(0,0,0,0.4);
+    border-color: rgba(255,255,255,0.4);
+    box-shadow: 0 0 0 4px rgba(255,255,255,0.05);
+  }
+
+  button {
+    width:100%;
+    padding:14px 0;
+    border:none;
+    border-radius:999px;
+    font-weight:600;
+    font-size:1rem;
+    color:#fff;
+    background: rgba(0, 0, 0, 0.35);
+    cursor:pointer;
+    transition: 0.25s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  button:hover {
+    background: rgba(0, 0, 0, 0.55);
+    transform: scale(1.03);
+  }
+
+  button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* Butonat e Navigimit */
+  .nav-group {
+    margin-top: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .nav-btn {
+    padding: 12px 0;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+    text-decoration: none;
+    display: block;
+    width: 100%;
+  }
+
+  .login-link {
+    background: rgba(166, 241, 166, 0.1);
+    color: #a6f1a6;
+    border: 1px solid rgba(166, 241, 166, 0.3);
+  }
+
+  .login-link:hover {
+    background: rgba(166, 241, 166, 0.2);
+  }
+
+  .back-btn {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+  }
+
+  .back-btn:hover {
+    background: rgba(255,255,255,0.05);
+  }
+
+  .message {
+    margin-top:16px;
+    font-weight:500;
+    font-size: 0.9rem;
+    min-height: 24px;
+    line-height: 1.4;
+  }
+
+  /* Syri i Password */
+  .pass-container {
+    position: relative;
+    width: 100%;
+  }
+
+  #togglePassword {
+    position: absolute;
+    right: 15px;
+    top: 13px; /* Pozicionimi ne qender */
+    cursor: pointer;
+    opacity: 0.6;
+    display: flex;
+    align-items: center;
+    z-index: 10;
+    transition: 0.2s;
+  }
+
+  #togglePassword:hover { opacity: 1; }
+
+  /* Spinner Animacioni */
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    display: none;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Krijo Llogari</h1>
+  <p style="margin-bottom: 25px; opacity: 0.7; font-size: 0.9rem;">Plotësoni të dhënat për regjistrim</p>
+  
+  <input type="text" id="emri" placeholder="Emri">
+  <input type="text" id="mbiemri" placeholder="Mbiemri">
+  <input type="text" id="username" placeholder="Username">
+  
+  <div class="pass-container">
+    <input type="password" id="password" placeholder="Fjalëkalimi" style="padding-right: 45px;">
+    <div id="togglePassword">
+      <svg id="eyeOpen" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+      <svg id="eyeClosed" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+    </div>
+  </div>
+  
+  <button id="signupBtn">
+    <span class="spinner" id="spinner"></span>
+    <span id="btnText">Regjistrohu</span>
+  </button>
+
+  <div class="message" id="signupMessage"></div>
+
+  <div class="nav-group">
+    <button class="nav-btn login-link" onclick="window.location.href='stdlogin.html'">Keni llogari? Hyr këtu</button>
+    <button class="nav-btn back-btn" onclick="window.location.href='index.html'">← Kthehu te Faqja Kryesore</button>
+  </div>
+</div>
+
+<script>
+const USER_WS_URL = "https://script.google.com/macros/s/AKfycbx66AOKiquQMOuaIW-_AQUIXPW1XwCC1B_IEN4XmV8OuIY3c9do8nG4tQvCJq02QU4/exec";
+
+const signupBtn = document.getElementById("signupBtn");
+const messageEl = document.getElementById("signupMessage");
+const spinner = document.getElementById("spinner");
+const btnText = document.getElementById("btnText");
+
+signupBtn.addEventListener("click", async () => {
+  const emri = document.getElementById("emri").value.trim();
+  const mbiemri = document.getElementById("mbiemri").value.trim();
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value;
+
+  if(!emri || !mbiemri || !username || !password){
+    showMessage("Ju lutemi plotësoni të gjitha fushat.", "#ff7777");
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    // KONTROLLI I USERNAME/EMRIT (PA PREKUR APPS SCRIPT)
+    const checkRes = await fetch(USER_WS_URL + "?type=users");
+    const existingUsers = await checkRes.json();
+
+    const userExists = existingUsers.some(u => u.Username && u.Username.toLowerCase() === username.toLowerCase());
+    const nameExists = existingUsers.some(u => u.Emri && u.Emri.toLowerCase() === emri.toLowerCase() && u.Mbiemri.toLowerCase() === mbiemri.toLowerCase());
+
+    if(userExists) {
+      showMessage("Ky përdorues është i regjistruar. Provoni një tjetër.", "#ff7777");
+      setLoading(false);
+      return;
+    }
+    if(nameExists) {
+      showMessage("Një llogari me këtë emër dhe mbiemër ekziston.", "#ff7777");
+      setLoading(false);
+      return;
+    }
+
+    // NESE GJITHCKA OK -> REGJISTROHU
+    const res = await fetch(USER_WS_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "signup",
+        Emri: emri,
+        Mbiemri: mbiemri,
+        Username: username,
+        Password: password
+      })
+    });
+
+    const data = await res.json();
+
+    if(data.success){
+      showMessage("Regjistrimi u krye me sukses! Llogaria juaj duhet të aprovohet.", "#a6f1a6");
+      setTimeout(()=> window.location.href="stdlogin.html", 3000);
+    } else {
+      showMessage(data.error || "Ndodhi një gabim.", "#ff7777");
+      setLoading(false);
+    }
+
+  } catch(err){
+    console.error(err);
+    showMessage("Ndodhi një gabim në lidhje me serverin.", "#ff7777");
+    setLoading(false);
+  }
+});
+
+function showMessage(text, color) {
+  messageEl.textContent = text;
+  messageEl.style.color = color;
+}
+
+function setLoading(isLoading) {
+  if (isLoading) {
+    signupBtn.disabled = true;
+    spinner.style.display = "block";
+    btnText.textContent = "Duke u regjistruar...";
+    messageEl.textContent = "";
+  } else {
+    signupBtn.disabled = false;
+    spinner.style.display = "none";
+    btnText.textContent = "Regjistrohu";
+  }
+}
+
+// Toggle Password Visibility
+const togglePassword = document.getElementById('togglePassword');
+const passwordInput = document.getElementById('password');
+const eyeOpen = document.getElementById('eyeOpen');
+const eyeClosed = document.getElementById('eyeClosed');
+
+togglePassword.addEventListener('click', function () {
+  const isPassword = passwordInput.type === 'password';
+  passwordInput.type = isPassword ? 'text' : 'password';
+  eyeOpen.style.display = isPassword ? 'none' : 'block';
+  eyeClosed.style.display = isPassword ? 'block' : 'none';
+});
+</script>
+
+</body>
+</html>
